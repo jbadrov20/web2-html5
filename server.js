@@ -17,10 +17,3 @@ app.get('/', (req, res) => {
 app.listen(port, () => {
     console.log(`Server sluša na portu ${port}`);
 });
-
-function paths() {
-    app.get('/styles.css', (req, res) => {
-        res.header('Content-Type', 'text/css');
-        res.sendFile(path.join(__dirname, 'public', 'styles.css'));
-    });
-}

@@ -9,38 +9,46 @@ let asteroids = [];
 const minAsteroidSpeed = 1;
 const maxAsteroidSpeed = 5;
 let playerX, playerY, playerSpeed, bestTime, time, difficulty = 3;
-let firstTime = true
+let firstTime = true;
 
 // Inicijalizacija igre
 function initGame() {
+    // Postavljanje veličine igračkog platna
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
+
+    // Postavljanje početne pozicije igrača
     playerX = canvas.width / 2 - playerSize / 2;
     playerY = canvas.height / 2 - playerSize / 2;
+
+    // Postavljanje brzine igrača
     playerSpeed = 15;
+
+    // Postavljanje početnog najboljeg vremena iz lokalne pohrane
     bestTime = localStorage.getItem('bestTime') || 0;
+
+    // Postavljanje trenutnog vremena
     time = Date.now();
     console.log(time);
-    initAsteroids();
-    if(firstTime) {
 
-        // Postavljanje event listenera za tipkovnicu
+    // Inicijalizacija asteroida
+    initAsteroids();
+
+    // Postavljanje event listenera za tipkovnicu ako je prvi put
+    if (firstTime) {
         window.addEventListener('keydown', (event) => movePlayer(event));
 
-    // Glavna petlja igre
-
+        // Postavljanje glavne petlje igre
         setInterval(update, 16);
-        
+
         // Povećava broj asteroida i brzinu svakih deset sekundi
-        setInterval(function() {
-            increaseDifficulty(difficulty++);
-        }, 10000);
+        setInterval(() => increaseDifficulty(difficulty++), 10000);
     }
-    
 }
 
 // Funkcija za svaki korak igre
 function update() {
+    // Pomiči asteroide, provjeri koliziju i iscrtaj
     moveAsteroids();
     checkCollision();
     draw();
@@ -48,6 +56,7 @@ function update() {
 
 // Funkcija za crtanje igre
 function draw() {
+    // Očisti platno
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // Crta igrača
@@ -124,6 +133,7 @@ function moveAsteroids() {
     }
 }
 
+// Funkcija za ponovno postavljanje asteroida izvan ekrana
 function repositionAsteroid(asteroid) {
     const side = Math.floor(Math.random() * 4);
 
@@ -168,37 +178,23 @@ function increaseDifficulty(difficulty) {
     initAsteroids(difficulty);
 }
 
-// Initialize asteroids
-// Funkcija za inicijalizaciju asteroida
+// Inicijalizacija asteroida
+// Funkcija za postavljanje asteroida na početku igre
 function initAsteroids(amount = 10) {
+    asteroids = [];
     for (let i = 0; i < amount; i++) {
-        let x, y;
-
-        // Postavi asteroid izvan ekrana
-        if (Math.random() < 0.5) {
-            // Početak iznad ili ispod ekrana
-            x = Math.random() * canvas.width;
-            y = Math.random() < 0.5 ? -asteroidSize : canvas.height + asteroidSize;
-        } else {
-            // Početak lijevo ili desno od ekrana
-            x = Math.random() < 0.5 ? -asteroidSize : canvas.width + asteroidSize;
-            y = Math.random() * canvas.height;
-        }
-
-        // Postavi smjer prema nasumičnoj točki unutar granica ekrana
+        const x = Math.random() * canvas.width;
+        const y = Math.random() < 0.5 ? -asteroidSize : canvas.height + asteroidSize;
         const randomTargetX = Math.random() * canvas.width;
         const randomTargetY = Math.random() * canvas.height;
         const angle = Math.atan2(randomTargetY - y, randomTargetX - x);
         const speedX = minAsteroidSpeed * Math.cos(angle);
         const speedY = minAsteroidSpeed * Math.sin(angle);
-
         asteroids.push({ x, y, speedX, speedY });
     }
 }
 
-
-
-
+// Funkcija za formatiranje vremena
 function formatTime(milliseconds) {
     const seconds = Math.floor(milliseconds / 1000);
     const minutes = Math.floor(seconds / 60);
@@ -208,22 +204,20 @@ function formatTime(milliseconds) {
     const remainingMinutes = minutes % 60;
     const remainingHours = hours % 24;
 
-    const formattedTime = `${pad(remainingHours)}:${pad(remainingMinutes)}:${pad(remainingSeconds)}`;
-    return formattedTime;
+    return `${pad(remainingHours)}:${pad(remainingMinutes)}:${pad(remainingSeconds)}`;
 }
 
+// Pomoćna funkcija za dodavanje nula ispred jednocifrenih brojeva
 function pad(number) {
     return (number < 10 ? '0' : '') + number;
 }
 
-
+// Funkcija koja se poziva kada igra završi
 function endGame() {
-    // Zaustavljanje igre
     firstTime = false;
     window.removeEventListener('keydown', movePlayer);
-    asteroids = [];
     time = Date.now() - time;
-    console.log(time);
+
     // Provjera je li ostvareno najbolje vrijeme
     if (bestTime == 0 || bestTime < time) {
         bestTime = time;
@@ -234,6 +228,7 @@ function endGame() {
     initGame();
 }
 
+// Postavljanje igre nakon učitavanja stranice
 window.onload = function () {
     initGame();
 };
