@@ -59,6 +59,14 @@ function draw() {
     // Očisti platno
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+    // Crta gornji dio sjene
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+    ctx.fillRect(playerX, playerY, playerSize, playerSize / 2);
+
+    // Crta donji dio sjene
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+    ctx.fillRect(playerX, playerY + playerSize / 2, playerSize, playerSize / 2);
+    
     // Crta igrača
     ctx.fillStyle = playerColor;
     ctx.fillRect(playerX, playerY, playerSize, playerSize);
@@ -66,22 +74,34 @@ function draw() {
     // Crta asteroide
     ctx.fillStyle = asteroidColor;
     for (const asteroid of asteroids) {
-        ctx.beginPath();
-        ctx.arc(
-            asteroid.x + asteroidSize / 2,
-            asteroid.y + asteroidSize / 2,
-            asteroidSize / 2,
-            0,
-            2 * Math.PI
+        const gradient = ctx.createLinearGradient(
+            asteroid.x,
+            asteroid.y,
+            asteroid.x + asteroidSize,
+            asteroid.y + asteroidSize
         );
-        ctx.fill();
-        ctx.closePath();
+    
+        // Postavljanje nijansi sive boje
+        gradient.addColorStop(0, '#666'); // Darker shade
+        gradient.addColorStop(0.5, '#999'); // Medium shade
+        gradient.addColorStop(1, '#ccc'); // Lighter shade
+    
+        // Crta pravokutnik asteroida s nijansama sive boje
+        ctx.fillStyle = gradient;
+        ctx.fillRect(asteroid.x, asteroid.y, asteroidSize, asteroidSize);
+    
+        // Dodaje 3D efekt oko ruba pravokutnika
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.fillRect(asteroid.x, asteroid.y, asteroidSize, asteroidSize / 2);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+        ctx.fillRect(asteroid.x, asteroid.y + asteroidSize / 2, asteroidSize, asteroidSize / 2);
     }
 
     // Crta najbolje vrijeme
     ctx.fillStyle = 'white';
     ctx.font = '20px Arial';
     ctx.fillText(`Najbolje vrijeme: ${formatTime(bestTime)}`, 10, 30);
+    ctx.fillText(`Trenutno vrijeme: ${formatTime(Date.now() - time)}`, 10, 60);
 }
 
 // Funkcija za pomak igrača
@@ -120,16 +140,6 @@ function moveAsteroids() {
     for (const asteroid of asteroids) {
         asteroid.x += asteroid.speedX;
         asteroid.y += asteroid.speedY;
-
-        /* Optional: Wrap asteroids around the screen
-        if (
-            asteroid.x + asteroidSize < 0 ||
-            asteroid.x > canvas.width ||
-            asteroid.y + asteroidSize < 0 ||
-            asteroid.y > canvas.height
-        ) {
-            repositionAsteroid(asteroid);
-        }*/
     }
 }
 
@@ -174,22 +184,37 @@ function checkCollision() {
 
 // Funkcija za povećanje broja asteroida i brzine
 function increaseDifficulty(difficulty) {
-    console.log("Difficulty increased by: " + difficulty);
+    let i = 0;
+    if(i++ % 4 == 3 && minAsteroidSpeed < maxAsteroidSpeed){
+        minAsteroidSpeed++;
+    }
     initAsteroids(difficulty);
 }
 
 // Inicijalizacija asteroida
 // Funkcija za postavljanje asteroida na početku igre
 function initAsteroids(amount = 10) {
-    asteroids = [];
     for (let i = 0; i < amount; i++) {
-        const x = Math.random() * canvas.width;
-        const y = Math.random() < 0.5 ? -asteroidSize : canvas.height + asteroidSize;
+        let x, y;
+
+        // Postavi asteroid izvan ekrana
+        if (Math.random() < 0.5) {
+            // Početak iznad ili ispod ekrana
+            x = Math.random() * canvas.width;
+            y = Math.random() < 0.5 ? -asteroidSize : canvas.height + asteroidSize;
+        } else {
+            // Početak lijevo ili desno od ekrana
+            x = Math.random() < 0.5 ? -asteroidSize : canvas.width + asteroidSize;
+            y = Math.random() * canvas.height;
+        }
+
+        // Postavi smjer prema nasumičnoj točki unutar granica ekrana
         const randomTargetX = Math.random() * canvas.width;
         const randomTargetY = Math.random() * canvas.height;
         const angle = Math.atan2(randomTargetY - y, randomTargetX - x);
         const speedX = minAsteroidSpeed * Math.cos(angle);
         const speedY = minAsteroidSpeed * Math.sin(angle);
+
         asteroids.push({ x, y, speedX, speedY });
     }
 }
@@ -216,6 +241,7 @@ function pad(number) {
 function endGame() {
     firstTime = false;
     window.removeEventListener('keydown', movePlayer);
+    asteroids = [];
     time = Date.now() - time;
 
     // Provjera je li ostvareno najbolje vrijeme
